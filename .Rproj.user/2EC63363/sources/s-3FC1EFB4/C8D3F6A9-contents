@@ -1,0 +1,48 @@
+library("xlsx")
+library("tm")
+library("SnowballC")
+library("wordcloud")
+library("RColorBrewer")
+library("htmlwidgets")
+library("widgetframe")
+data_text <- read.xlsx("Election_Text.xlsx", sheetIndex = 1)
+textlist <- as.character(data_text$Text)
+docs <- Corpus(VectorSource(textlist))
+toSpace <- content_transformer(function (x , pattern ) gsub(pattern, " ", x, perl = TRUE))
+docs <- tm_map(docs, toSpace, "/")
+docs <- tm_map(docs, toSpace, "™")
+docs <- tm_map(docs, toSpace, "\n")
+docs <- tm_map(docs, toSpace, "€")
+docs <- tm_map(docs, toSpace, "â")
+docs <- tm_map(docs, toSpace, "[.[0-9]+.]")
+docs <- tm_map(docs, toSpace, "œ")
+
+
+# Convert the text to lower case
+docs <- tm_map(docs, content_transformer(tolower))
+# Remove english common stopwords
+docs <- tm_map(docs, removeWords, stopwords("english"))
+docs <- tm_map(docs, removeWords, c("s", "m", "t", "election", "candidates", "presidential","campaign", "electoral", "vote", "votes", "president", "presidency", "won", "held")) 
+# Remove punctuations
+docs <- tm_map(docs, removePunctuation)
+# Eliminate extra white spaces
+docs <- tm_map(docs, stripWhitespace)
+
+
+mapply(function(x,y) {
+  dtm <- TermDocumentMatrix(Corpus(VectorSource(x)))
+  m <- as.matrix(dtm)
+  v <- sort(rowSums(m),decreasing=TRUE)
+  d <- data.frame(word = names(v),freq=v)
+  reduce_d <- head(d, 50)
+  
+  cloud <- wordcloud2(reduce_d, size = 2, minRotation = -pi/2, maxRotation = -pi/2)
+  cloud<- combineWidgets(cloud, nrow = 1)
+  saveWidget(frameableWidget(cloud), paste0(y, ".html"))}, docs , data_text$Year
+)
+
+
+
+
+
+  
