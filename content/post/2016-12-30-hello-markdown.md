@@ -1,6 +1,6 @@
 ---
-date: "2016-12-30T21:49:57-07:00"
-title: Example
+date: "2019-03-10T21:49:57-07:00"
+title: Example Visualisations 
 ---
 
 Here are some examples of the visualisations I made - 
