@@ -5,4 +5,4 @@ title: Example
 
 Here are some examples of the visualisations I made - 
 
-1. [China - Male vs Female Population](Viz/China - Male vs Female Population.html) - This is a visualisations I made in R using the highcharter library. There is also a play button at the bottom to view the population growth over-time. 
+1. [China - Male vs Female Population](/Viz/China - Male vs Female Population.html) - This is a visualisations I made in R using the highcharter library. There is also a play button at the bottom to view the population growth over-time. 

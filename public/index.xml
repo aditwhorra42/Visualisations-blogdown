@@ -13,10 +13,10 @@
     
     <item>
       <title>Example</title>
-      <link>/2016/12/30/example/</link>
+      <link>/example/</link>
       <pubDate>Fri, 30 Dec 2016 21:49:57 -0700</pubDate>
       
-      <guid>/2016/12/30/example/</guid>
+      <guid>/example/</guid>
       <description>Here are some examples of the visualisations I made -
  China - Male vs Female Population - This is a visualisations I made in R using the highcharter library. There is also a play button at the bottom to view the population growth over-time.  </description>
     </item>
