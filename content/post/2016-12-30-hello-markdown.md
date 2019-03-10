@@ -1,6 +1,6 @@
 ---
 date: "2019-03-10T21:49:57-07:00"
-title: Example Visualisations 
+title: Example Visualisations
 ---
 
 Here are some examples of the visualisations I made - 
@@ -13,4 +13,4 @@ Here are some examples of the visualisations I made -
 
 4. [Gallup Survey - India Visualisation](/Viz/Gallup Survey - India Visualisation.html) - A visualisation of the Gallup survey data in India.
 
-5. [India Survey PCA Report](/Viz/India Survey PCA Report.html) - A report that analyses the correlates of Literacy Rate using Principal Component Analysis. The report explains the different dimensions created after PCA and then clusters the districts based on different dimensions. 
+5. [India Survey PCA Report](/Viz/India Survey PCA Report.html) - A report that analyses the correlates of Literacy Rate using Principal Component Analysis. The report explains the different dimensions created after PCA and then clusters the districts based on different dimensions
