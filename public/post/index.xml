@@ -17,8 +17,8 @@
       <pubDate>Fri, 30 Dec 2016 21:49:57 -0700</pubDate>
       
       <guid>/2016/12/30/example/</guid>
-      <description>This is a post written in plain Markdown (*.md) instead of R Markdown (*.Rmd). The major differences are:
- You cannot run any R code in a plain Markdown document, whereas in an R Markdown document, you can embed R code chunks (```{r}); A plain Markdown post is rendered through Blackfriday, and an R Markdown document is compiled by rmarkdown and Pandoc.  There are many differences in syntax between Blackfriday&amp;rsquo;s Markdown and Pandoc&amp;rsquo;s Markdown.</description>
+      <description>Here are some examples of the visualisations I made -
+ China - Male vs Female Population - This is a visualisations I made in R using the highcharter library. There is also a play button at the bottom to view the population growth over-time.  </description>
     </item>
     
   </channel>

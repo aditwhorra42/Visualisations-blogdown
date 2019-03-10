@@ -5,13 +5,15 @@
     "dirty" : false,
     "encoding" : "UTF-8",
     "folds" : "",
-    "hash" : "1437610487",
+    "hash" : "0",
     "id" : "D16DAA49",
     "lastKnownWriteTime" : 1552205796,
     "last_content_update" : 1552205796,
     "path" : "C:/Users/aditw/OneDrive/Desktop/Adit - Backup/Adit/Visualizations/Showcase/config.toml",
     "project_path" : "config.toml",
     "properties" : {
+        "cursorPosition" : "39,15",
+        "scrollLine" : "10"
     },
     "relative_order" : 1,
     "source_on_save" : false,
