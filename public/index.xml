@@ -12,15 +12,14 @@
     
     
     <item>
-      <title>Example Visulaisations</title>
-      <link>/example-visulaisations/</link>
+      <title>Example Visulisations</title>
+      <link>/example-visulisations/</link>
       <pubDate>Fri, 30 Dec 2016 21:49:57 -0700</pubDate>
       
-      <guid>/example-visulaisations/</guid>
+      <guid>/example-visulisations/</guid>
       <description>Here are some examples of the visualisations I made -
- China - Male vs Female Population - This is a visualisations I made in R using the highcharter library. There is also a play button at the bottom to view the population growth over-time.
- India - Domestic Violence Quiz - A visualisation to understand the physical abuse that women in India are subjected to.
- India - Literacy Rate - This is a report I made to visualise corealltions of Literacy Rate in different regions of the country to different variables measuresd in the 15th Indian Census (2011)</description>
+ China - Male vs Female Population - A visualisation in R using the highcharter library to visualise the the growth of male and female population in China overtime. (Press play button at the bottom). Data Source - IHME Global Burden of Disease Population Estimates
+ India - Domestic Violence Quiz - A visualisation to understand the physical abuse against women in India.</description>
     </item>
     
     <item>

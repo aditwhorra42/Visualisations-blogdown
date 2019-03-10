@@ -1,16 +1,16 @@
 ---
 date: "2016-12-30T21:49:57-07:00"
-title: Example Visulaisations 
+title: Example Visulisations 
 ---
 
 Here are some examples of the visualisations I made - 
 
-1. [China - Male vs Female Population](/Viz/China - Male vs Female Population.html) - This is a visualisations I made in R using the highcharter library. There is also a play button at the bottom to view the population growth over-time. 
+1. [China - Male vs Female Population](/Viz/China - Male vs Female Population.html) - A visualisation in R using the highcharter library to visualise the the growth of male and female population in China overtime. (Press play button at the bottom). Data Source - IHME Global Burden of Disease Population Estimates 
 
-2. [India - Domestic Violence Quiz](/Viz/India - Domestic Violence Quiz.html) - A visualisation to understand the physical abuse that women in India are subjected to.
+2. [India - Domestic Violence Quiz](/Viz/India - Domestic Violence Quiz.html) - A visualisation to understand the physical abuse against women in India. Interactivity in the form of user inputs has a greater impact on the viewer while visualising social issues. 
 
-3. [India - Literacy Rate](/Viz/India - Literacy Rate.html) - This is a report I made to visualise corealltions of Literacy Rate in different regions of the country to different variables measuresd in the 15th Indian Census (2011) 
+3. [India - Literacy Rate](/Viz/India - Literacy Rate.html) - A report to visualise corealltions of Literacy Rate in different regions of the country to different variables measured in the [15th Indian Census (2011)](https://www.census2011.co.in/). Developed in R using the plotly library.
 
-4. [Gallup Survey - India Visualisation](/Viz/Gallup Survey - India Visualisation.html) - A visualisation of the Gallup survey data in India.
+4. [Gallup Survey - India Visualisation](/Viz/Gallup Survey - India Visualisation.html) - A visualisation of the [Gallup World Poll](https://www.gallup.com/analytics/232838/world-poll.aspx) data in India. Developed in R using ggplotly and highcharter libraries.
 
-5. [India Survey PCA Report](/Viz/India Survey PCA Report.html) - A report that analyses the correlates of Literacy Rate using Principal Component Analysis. The report explains the different dimensions created after PCA and then clusters the districts based on different dimensions
+5. [India Survey PCA Report](/Viz/India Survey PCA Report.html) - A report that analyses the correlates of Literacy Rate using Principal Component Analysis. The report explains the different dimensions created after PCA and then clusters the districts based on the dimensions. Developed using plotly, highcharter and scatterD3 libraries.

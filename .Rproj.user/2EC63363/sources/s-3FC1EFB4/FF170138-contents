@@ -1,0 +1,446 @@
+---
+title: "India Demographics Multivariate Analysis"
+author: "Adit Whorra"
+date: "16 July 2018"
+output: 
+  rmdformats::readthedown:
+    highlight: kate
+---
+
+```{r knitr_init, echo=FALSE, cache=FALSE}
+library(knitr)
+library(rmdformats)
+
+## Global options
+options(max.print="75")
+opts_chunk$set(echo=FALSE,
+	             cache=TRUE,
+               prompt=FALSE,
+               tidy=TRUE,
+               comment=NA,
+               message=FALSE,
+               warning=FALSE)
+opts_knit$set(width=75)
+```
+
+# Data Description
+The data used in the analysis comes from the **15th Indian Census** conducted in 2011. Spread across 28 states and 7 union territories, the census covered 640 districts, and provided information about a wide variety of demographics such as education, gender and living conditions in each of these districts. 
+The analyses in this report focusses on identifying regions and districts that have higher values of Literacy Rate and understanding the relationship between Literacy Rate and other demographics and vice versa. 
+
+## List of Variables 
+```{r}
+india <- read.csv("India_Demographics_new.csv") %>% select(c(1:4,120:197))
+frame = data.frame(colnames(india))
+names(frame) <-c("Column Name")
+DT::datatable(frame, options = list(
+  bPaginate = TRUE
+))
+```
+
+# Map: Literacy Rate
+
+```{r echo=FALSE, cache = TRUE}
+library(tidyr)
+library(plotly)
+library(dplyr)
+
+nc <- sf::st_read("Shape Files/2001_Dist.shp", quiet = TRUE)
+data <- left_join(nc,india, by = c("DISTRICT" = "District.name"))
+data <- data %>%
+    mutate(quintile = ntile(Literacy_Rate, 5))
+
+data$quintile <- recode(data$quintile,
+               "5" = "Q5",
+               "2" = "Q2",
+               "1" = "Q1",
+               "4" = "Q4",
+               "3" = "Q3")
+data$quintile <- factor(data$quintile)
+
+data <- data %>% mutate(Top20 = ifelse(is.na(quintile), "No", ifelse(quintile == "Q5", "Yes", "No")))
+
+plot_ly(data, color = ~Top20, colors = c("grey","#a6cee3") ,alpha = 1,split = ~DISTRICT,
+        showlegend = FALSE, text = ~paste("District: ", `DISTRICT`, "<br>State: ", `State.name`,"<br>Top 20: ", `Top20`), hoverinfo = "text", stroke = I("black"), span = I(0.5), hoveron = "fill")
+
+```
+
+# Correlates of Literacy Rate (Top 9) {.tabset}
+
+## Age 0-29
+```{r echo=FALSE}
+library(FSelector)
+library(purrr)
+library(magick)
+weights = linear.correlation(Literacy_Rate~.,select(india, -c(1:4,8:11,41:46)))
+subset <- cutoff.k(weights, 9)
+india_subset <- select(india, c(1:4,7,subset))
+
+region <- read.csv("region.csv")
+names(region) = c("State", "Region")
+india_subset <- india_subset %>% left_join(region, by = c("State.name" = "State")) %>% 
+  tidyr::gather(Type, Value, 6:14) %>% filter(!Region %in% c("Arabian Sea", "Bay of Bengal"))
+
+region_names <- as.character(sort(unique(india_subset$Region)))
+
+india_long <- filter(india_subset, Type == "Age_Group_0_29_percent")
+
+fig1 <- (lapply(region_names, function(reg) {
+  data <- filter(india_long, Region == reg)
+  m <- loess(Literacy_Rate ~ Value, data = data)
+  m <- broom::augment(m) 
+  plot_ly(data = data,  x = ~Value, y = ~Literacy_Rate, width = 800, height = 900) %>% 
+    add_ribbons(data= m, 
+                name = NULL,
+                ymin = ~.fitted -  .se.fit, 
+                ymax = ~.fitted +  .se.fit, 
+                name = 'Trend Line',
+                color = I("gray80"), 
+                showlegend = FALSE) %>%
+    add_lines(data= m, 
+              y = ~.fitted, 
+              name = NULL,
+              name = 'Trend Line',
+              color = I("grey"), 
+              showlegend = FALSE)  %>%
+    add_markers(data = data,
+                color = ~Literacy_Rate,
+                name = 'Literacy Rate',
+                text = ~paste("District: ", `District.name`,
+                              "<br>State: ", `State.name`),
+                hoverinfo = 'text',
+                showlegend = FALSE)     %>%
+    layout(xaxis = list(title = reg, showgrid=F), yaxis = list(title = "Literacy Rate"))%>%
+    hide_colorbar()}))
+subplot(fig1, nrows = 2, shareY = TRUE, titleY = TRUE, titleX = TRUE, margin = .075)%>%
+    layout(title = "Correlation of Literacy Rate and Age Group (0-29) by region")
+
+list.files(path = "Maps/Age_Group_0_29_percent", pattern = "*.png", full.names = T) %>%
+  map(image_read) %>% # reads each path file
+  image_join() %>% # joins image
+  image_animate(fps=4)# animates, can opt for number of loops
+```
+
+## Age 30-49
+```{r echo=FALSE}
+india_long <- filter(india_subset, Type == "Age_Group_30_49_percent")
+
+fig1 <- (lapply(region_names, function(reg) {
+  data <- filter(india_long, Region == reg)
+  m <- loess(Literacy_Rate ~ Value, data = data)
+  m <- broom::augment(m) 
+  plot_ly(data = data,  x = ~Value, y = ~Literacy_Rate, width = 800, height = 900) %>% 
+    add_ribbons(data= m, 
+                name = NULL,
+                ymin = ~.fitted -  .se.fit, 
+                ymax = ~.fitted +  .se.fit, 
+                name = 'Trend Line',
+                color = I("gray80"), 
+                showlegend = FALSE) %>%
+    add_lines(data= m, 
+              y = ~.fitted, 
+              name = NULL,
+              name = 'Trend Line',
+              color = I("grey"), 
+              showlegend = FALSE)  %>%
+    add_markers(data = data,
+                color = ~Literacy_Rate,
+                name = 'Literacy Rate',
+                text = ~paste("District: ", `District.name`,
+                              "<br>State: ", `State.name`),
+                hoverinfo = 'text',
+                showlegend = FALSE)     %>%
+    layout(xaxis = list(title = reg, showgrid=F), yaxis = list(title = "Literacy Rate"))%>%
+    hide_colorbar()}))
+subplot(fig1, nrows = 2, shareY = TRUE, titleY = TRUE, titleX = TRUE, margin = .075)%>%
+    layout(title = "Correlation of Literacy Rate and Age Group (30-49) by region")
+
+list.files(path = "Maps/Age_Group_30_49_percent", pattern = "*.png", full.names = T) %>%
+  map(image_read) %>% # reads each path file
+  image_join() %>% # joins image
+  image_animate(fps=4)# animates, can opt for number of loops
+```
+
+## Age 50+
+```{r echo=FALSE}
+india_long <- filter(india_subset, Type == "Age_Group_50_percent")
+
+fig1 <- (lapply(region_names, function(reg) {
+  data <- filter(india_long, Region == reg)
+  m <- loess(Literacy_Rate ~ Value, data = data)
+  m <- broom::augment(m) 
+  plot_ly(data = data,  x = ~Value, y = ~Literacy_Rate, width = 800, height = 900) %>% 
+    add_ribbons(data= m, 
+                name = NULL,
+                ymin = ~.fitted -  .se.fit, 
+                ymax = ~.fitted +  .se.fit, 
+                name = 'Trend Line',
+                color = I("gray80"), 
+                showlegend = FALSE) %>%
+    add_lines(data= m, 
+              y = ~.fitted, 
+              name = NULL,
+              name = 'Trend Line',
+              color = I("grey"), 
+              showlegend = FALSE)  %>%
+    add_markers(data = data,
+                color = ~Literacy_Rate,
+                name = 'Literacy Rate',
+                text = ~paste("District: ", `District.name`,
+                              "<br>State: ", `State.name`),
+                hoverinfo = 'text',
+                showlegend = FALSE)     %>%
+    layout(xaxis = list(title = reg, showgrid=F), yaxis = list(title = "Literacy Rate"))%>%
+    hide_colorbar()}))
+subplot(fig1, nrows = 2, shareY = TRUE, titleY = TRUE, titleX = TRUE, margin = .075)%>%
+    layout(title = "Correlation of Literacy Rate and Age Group (50+) by region")
+
+list.files(path = "Maps/Age_Group_50_percent", pattern = "*.png", full.names = T) %>%
+  map(image_read) %>% # reads each path file
+  image_join() %>% # joins image
+  image_animate(fps=4)# animates, can opt for number of loops
+```
+
+## Latrine
+```{r echo=FALSE}
+india_long <- filter(india_subset, Type == "Household_Latrine_Facility_percent")
+
+fig1 <- (lapply(region_names, function(reg) {
+  data <- filter(india_long, Region == reg)
+  m <- loess(Literacy_Rate ~ Value, data = data)
+  m <- broom::augment(m) 
+  plot_ly(data = data,  x = ~Value, y = ~Literacy_Rate, width = 800, height = 900) %>% 
+    add_ribbons(data= m, 
+                name = NULL,
+                ymin = ~.fitted -  .se.fit, 
+                ymax = ~.fitted +  .se.fit, 
+                name = 'Trend Line',
+                color = I("gray80"), 
+                showlegend = FALSE) %>%
+    add_lines(data= m, 
+              y = ~.fitted, 
+              name = NULL,
+              name = 'Trend Line',
+              color = I("grey"), 
+              showlegend = FALSE)  %>%
+    add_markers(data = data,
+                color = ~Literacy_Rate,
+                name = 'Literacy Rate',
+                text = ~paste("District: ", `District.name`,
+                              "<br>State: ", `State.name`),
+                hoverinfo = 'text',
+                showlegend = FALSE)     %>%
+    layout(xaxis = list(title = reg, showgrid=F), yaxis = list(title = "Literacy Rate"))%>%
+    hide_colorbar()}))
+subplot(fig1, nrows = 2, shareY = TRUE, titleY = TRUE, titleX = TRUE, margin = .075)%>%
+    layout(title = "Correlation of Literacy Rate and Percentage Households with Latrine Facilities by region")
+
+list.files(path = "Maps/Household_Latrine_Facility_percent", pattern = "*.png", full.names = T) %>%
+  map(image_read) %>% # reads each path file
+  image_join() %>% # joins image
+  image_animate(fps=4)# animates, can opt for number of loops
+```
+
+## Television
+```{r echo=FALSE}
+india_long <- filter(india_subset, Type == "Household_with_Television_percent")
+
+fig1 <- (lapply(region_names, function(reg) {
+  data <- filter(india_long, Region == reg)
+  m <- loess(Literacy_Rate ~ Value, data = data)
+  m <- broom::augment(m) 
+  plot_ly(data = data,  x = ~Value, y = ~Literacy_Rate, width = 800, height = 900) %>% 
+    add_ribbons(data= m, 
+                name = NULL,
+                ymin = ~.fitted -  .se.fit, 
+                ymax = ~.fitted +  .se.fit, 
+                name = 'Trend Line',
+                color = I("gray80"), 
+                showlegend = FALSE) %>%
+    add_lines(data= m, 
+              y = ~.fitted, 
+              name = NULL,
+              name = 'Trend Line',
+              color = I("grey"), 
+              showlegend = FALSE)  %>%
+    add_markers(data = data,
+                color = ~Literacy_Rate,
+                name = 'Literacy Rate',
+                text = ~paste("District: ", `District.name`,
+                              "<br>State: ", `State.name`),
+                hoverinfo = 'text',
+                showlegend = FALSE)     %>%
+    layout(xaxis = list(title = reg, showgrid=F), yaxis = list(title = "Literacy Rate"))%>%
+    hide_colorbar()}))
+subplot(fig1, nrows = 2, shareY = TRUE, titleY = TRUE, titleX = TRUE, margin = .075)%>%
+    layout(title = "Correlation of Literacy Rate and Percentage Households with Television by region")
+
+list.files(path = "Maps/Household_Latrine_Facility_percent", pattern = "*.png", full.names = T) %>%
+  map(image_read) %>% # reads each path file
+  image_join() %>% # joins image
+  image_animate(fps=4)# animates, can opt for number of loops
+```
+
+## Electricity
+
+```{r echo=FALSE}
+india_long <- filter(india_subset, Type == "Houses_Electric_Lighting_percent")
+
+fig1 <- (lapply(region_names, function(reg) {
+  data <- filter(india_long, Region == reg)
+  m <- loess(Literacy_Rate ~ Value, data = data)
+  m <- broom::augment(m) 
+  plot_ly(data = data,  x = ~Value, y = ~Literacy_Rate, width = 800, height = 900) %>% 
+    add_ribbons(data= m, 
+                name = NULL,
+                ymin = ~.fitted -  .se.fit, 
+                ymax = ~.fitted +  .se.fit, 
+                name = 'Trend Line',
+                color = I("gray80"), 
+                showlegend = FALSE) %>%
+    add_lines(data= m, 
+              y = ~.fitted, 
+              name = NULL,
+              name = 'Trend Line',
+              color = I("grey"), 
+              showlegend = FALSE)  %>%
+    add_markers(data = data,
+                color = ~Literacy_Rate,
+                name = 'Literacy Rate',
+                text = ~paste("District: ", `District.name`,
+                              "<br>State: ", `State.name`),
+                hoverinfo = 'text',
+                showlegend = FALSE)     %>%
+    layout(xaxis = list(title = reg, showgrid=F), yaxis = list(title = "Literacy Rate"))%>%
+    hide_colorbar()}))
+subplot(fig1, nrows = 2, shareY = TRUE, titleY = TRUE, titleX = TRUE, margin = .075)%>%
+    layout(title = "Correlation of Literacy Rate and Percentage Houses with Electricity by region")
+
+list.files(path = "Maps/Houses_Electric_Lighting_percent", pattern = "*.png", full.names = T) %>%
+  map(image_read) %>% # reads each path file
+  image_join() %>% # joins image
+  image_animate(fps=4)# animates, can opt for number of loops
+```
+
+## LPG/PNG 
+```{r echo=FALSE}
+india_long <- filter(india_subset, Type == "Houses_LPG.PNG_percent")
+
+fig1 <- (lapply(region_names, function(reg) {
+  data <- filter(india_long, Region == reg)
+  m <- loess(Literacy_Rate ~ Value, data = data)
+  m <- broom::augment(m) 
+  plot_ly(data = data,  x = ~Value, y = ~Literacy_Rate, width = 800, height = 900) %>% 
+    add_ribbons(data= m, 
+                name = NULL,
+                ymin = ~.fitted -  .se.fit, 
+                ymax = ~.fitted +  .se.fit, 
+                name = 'Trend Line',
+                color = I("gray80"), 
+                showlegend = FALSE) %>%
+    add_lines(data= m, 
+              y = ~.fitted, 
+              name = NULL,
+              name = 'Trend Line',
+              color = I("grey"), 
+              showlegend = FALSE)  %>%
+    add_markers(data = data,
+                color = ~Literacy_Rate,
+                name = 'Literacy Rate',
+                text = ~paste("District: ", `District.name`,
+                              "<br>State: ", `State.name`),
+                hoverinfo = 'text',
+                showlegend = FALSE)     %>%
+    layout(xaxis = list(title = reg, showgrid=F), yaxis = list(title = "Literacy Rate"))%>%
+    hide_colorbar()}))
+subplot(fig1, nrows = 2, shareY = TRUE, titleY = TRUE, titleX = TRUE, margin = .075)%>%
+    layout(title = "Correlation of Literacy Rate and Percentage Houses with LPG/PNG by region")
+
+list.files(path = "Maps/Houses_LPG.PNG_percent", pattern = "*.png", full.names = T) %>%
+  map(image_read) %>% # reads each path file
+  image_join() %>% # joins image
+  image_animate(fps=4)# animates, can opt for number of loops
+```
+
+## Other Workers
+```{r echo=FALSE}
+india_long <- filter(india_subset, Type == "Other_Workers_percent")
+
+fig1 <- (lapply(region_names, function(reg) {
+  data <- filter(india_long, Region == reg)
+  m <- loess(Literacy_Rate ~ Value, data = data)
+  m <- broom::augment(m) 
+  plot_ly(data = data,  x = ~Value, y = ~Literacy_Rate, width = 800, height = 900) %>% 
+    add_ribbons(data= m, 
+                name = NULL,
+                ymin = ~.fitted -  .se.fit, 
+                ymax = ~.fitted +  .se.fit, 
+                name = 'Trend Line',
+                color = I("gray80"), 
+                showlegend = FALSE) %>%
+    add_lines(data= m, 
+              y = ~.fitted, 
+              name = NULL,
+              name = 'Trend Line',
+              color = I("grey"), 
+              showlegend = FALSE)  %>%
+    add_markers(data = data,
+                color = ~Literacy_Rate,
+                name = 'Literacy Rate',
+                text = ~paste("District: ", `District.name`,
+                              "<br>State: ", `State.name`),
+                hoverinfo = 'text',
+                showlegend = FALSE)     %>%
+    layout(xaxis = list(title = reg, showgrid=F), yaxis = list(title = "Literacy Rate"))%>%
+    hide_colorbar()}))
+subplot(fig1, nrows = 2, shareY = TRUE, titleY = TRUE, titleX = TRUE, margin = .075)%>%
+    layout(title = "Correlation of Literacy Rate and Percentage of Other Workers by region")
+
+list.files(path = "Maps/Other_Workers_percent", pattern = "*.png", full.names = T) %>%
+  map(image_read) %>% # reads each path file
+  image_join() %>% # joins image
+  image_animate(fps=4)# animates, can opt for number of loops
+```
+
+## 6-8 Members
+```{r echo=FALSE}
+india_long <- filter(india_subset, Type == "Household_with_6_to_8_persons_percent")
+
+fig1 <- (lapply(region_names, function(reg) {
+  data <- filter(india_long, Region == reg)
+  m <- loess(Literacy_Rate ~ Value, data = data)
+  m <- broom::augment(m) 
+  plot_ly(data = data,  x = ~Value, y = ~Literacy_Rate, width = 800, height = 900) %>% 
+    add_ribbons(data= m, 
+                name = NULL,
+                ymin = ~.fitted -  .se.fit, 
+                ymax = ~.fitted +  .se.fit, 
+                name = 'Trend Line',
+                color = I("gray80"), 
+                showlegend = FALSE) %>%
+    add_lines(data= m, 
+              y = ~.fitted, 
+              name = NULL,
+              name = 'Trend Line',
+              color = I("grey"), 
+              showlegend = FALSE)  %>%
+    add_markers(data = data,
+                color = ~Literacy_Rate,
+                name = 'Literacy Rate',
+                text = ~paste("District: ", `District.name`,
+                              "<br>State: ", `State.name`),
+                hoverinfo = 'text',
+                showlegend = FALSE)     %>%
+    layout(xaxis = list(title = reg, showgrid=F), yaxis = list(title = "Literacy Rate"))%>%
+    hide_colorbar()}))
+subplot(fig1, nrows = 2, shareY = TRUE, titleY = TRUE, titleX = TRUE, margin = .075)%>%
+    layout(title = "Correlation of Literacy Rate and Percentage Households with 6-8 Members by region")
+
+list.files(path = "Maps/Household_with_6_to_8_persons_percent", pattern = "*.png", full.names = T) %>%
+  map(image_read) %>% # reads each path file
+  image_join() %>% # joins image
+  image_animate(fps=4)# animates, can opt for number of loops
+```
+
+# Conclusion 
+
+A strong trend observed is that districts in the Top 20 percentile of Literacy Rate are much better off than the others. These districts have more households that have electricity, televisions, PNG/LPG gas and latrine facilities. This can also be seen in the correlation graphs as the graphs are steaper for Southern and Eastern regions for most varibales as these are the regions where  most of the top 20 regions are clustered. Another observation is that regions with high literacy rate have a high percentage of other workers (other than household, cultivation and agriculture workers). Therefore, other workers are better educated and more well off than agricultural, cultivation and household workers.

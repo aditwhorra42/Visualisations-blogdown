@@ -1,0 +1,209 @@
+---
+title: "India Demographics Multivariate Analysis"
+author: "Adit Whorra"
+date: "16 July 2018"
+output: 
+  rmdformats::readthedown:
+    highlight: kate
+---
+
+```{r knitr_init, echo=FALSE, cache=FALSE}
+library(knitr)
+library(rmdformats)
+
+## Global options
+options(max.print="75")
+opts_chunk$set(echo=FALSE,
+	             cache=FALSE,
+               prompt=FALSE,
+               tidy=TRUE,
+               comment=NA,
+               message=FALSE,
+               warning=FALSE)
+opts_knit$set(width=75)
+```
+
+# Principal Component Ananlysis
+
+## Variance Explained
+```{r}
+library(dplyr)
+library(highcharter)
+library(FactoMineR)
+
+india <- read.csv("India_Demographics_new.csv") %>% select(c(2:5, 120:175))
+rownames(india) <- paste0(india$District.name, ", ", india$State.name)
+india <- na.omit(india)
+demo <- select(india, -c(1:3))
+out<-PCA(demo, graph = FALSE, scale.unit = TRUE)
+variance <- as.data.frame(out$eig)[1:10, c(1,2)] %>% rename("Variance" = "percentage of variance") %>% arrange(desc(eigenvalue))
+
+variance$Component <- rownames(variance)
+variance$Variance <- round(variance$Variance, 2)
+
+
+hchart(variance, "bar", name= "Percentage of variance", hcaes(x="Component", y="Variance"))%>%
+        hc_plotOptions(bar = list( dataLabels = list(enabled = TRUE, 
+        format = '{point.y}'), 
+        enableMouseTracking = TRUE)) %>% 
+        hc_yAxis(title = list(text = "Component"),
+        labels = list(format = "{value}"),
+        min=2,  
+        max = 32 )  %>%
+       hc_xAxis(title= list(text = "Percentage of Variance")) %>%
+       hc_legend(enabled=TRUE, 
+       layout = "horizontal", 
+       verticalAlign = "bottom",
+       floating =FALSE,
+       align = "center", 
+       style=list(fontsize="14px"))%>%
+       hc_size(height=600, width = 800)%>%
+       hc_add_theme(hc_theme_tufte())%>%
+       hc_colors("black")%>%
+       hc_tooltip(crosshairs= list(enabled= TRUE, 
+      color=c("#f7f2e6")),
+      backgroundColor = "#f0f0f0",
+      valueDecimals=2,
+      shared = TRUE, 
+      borderWidth = 1, 
+      pointFormat = "% Variance Explained: {point.y}")
+```
+
+81.2 percent of the variability is explained by the first 10 principal components. 
+
+## Variable Factor Map Dimension 1 & 2
+
+1. Dimension 1   
+    * High Correlation  
+        + Percentage of urban households.  
+        + Percentage of households with LPG/PNG.  
+        + Percentage of households with access to good quality drinking water.  
+        + High education levels.  
+    * Low Correlation  
+        + Percentage of rural households.  
+        + Households with access to medium quality drinking Water.  
+        + Low education levels.  
+
+2. Dimension 2   
+    * High Correlation  
+        + Percentage of working population.  
+        + Percentage of small households.  
+        + Percentage of ST.  
+        + Female population.  
+    * Low Correlation  
+        + Percentage of non-working population.  
+        + Percentage of big household.  
+        + Male population.  
+
+
+
+```{r}
+library(broom)
+library(scatterD3)
+cc2<-data.frame(out$var$coord)
+cc2$Variable <- rownames(cc2)
+cc2$Type <- as.factor(c("Demographic", "Demographic", "Demographic", "Education", "Education", "Education", "Caste/Religion", "Caste/Religion", "Demographic", "Demographic", 
+              "Demographic", "Demographic", "Demographic", "Demographic", "Profession", "Profession", "Profession", "Profession", "Caste/Religion", "Caste/Religion", 
+              "Caste/Religion", "Caste/Religion", "Caste/Religion", "Caste/Religion", "Household", "Household", "Household", "Household", "Household", "Household", 
+              "Education", "Education", "Education", "Demographic", "Demographic", "Demographic", rep("Household", 21)))
+tooltips <- paste0("Variable: ", cc2$Variable, "<br />Dimension 1: ", round(cc2$Dim.1, 3), "<br />Dimension 2: ", round(cc2$Dim.2,3), "<br />Type: ", cc2$Type)
+
+scatterD3(data = cc2, x = Dim.1, y = Dim.2, tooltip_text = tooltips, col_lab = "Type of Variable", col_var = Type, unit_circle = TRUE, 
+          type_var = c(rep("arrow", 57)), lab = Variable, labels_size = 7)
+
+```
+
+## District Factor Map Dimension 1 & 2
+
+```{r}
+i <- data.frame(out$ind$coord)
+india_updated <- cbind(india, i)
+
+# Clustering based on 1 and 2
+kclust <- kmeans(india_updated[,61:62], 3)
+z <- augment(kclust, india_updated)
+z <- rename(z, "Cluster_1_2" = ".cluster")
+
+# Clustering based on 2 and 3
+kclust <- kmeans(india_updated[,62:63], 3)
+z <- augment(kclust, z)
+z <- rename(z, "Cluster_2_3" = ".cluster")
+
+# Clustering based on 1 and 3
+kclust <- kmeans(india_updated[,c(61,63)], 3)
+z <- augment(kclust, z)
+z <- rename(z, "Cluster_1_3" = ".cluster")
+
+# Clustering based on 3 and 4
+kclust <- kmeans(india_updated[,c(63,64)], 3)
+z <- augment(kclust, z)
+z <- rename(z, "Cluster_3_4" = ".cluster")
+
+# Clustering based on all five dimensions
+kclust <- kmeans(india_updated[,61:65], 3)
+z <- augment(kclust, z)
+z <- rename(z, "Cluster_all" = ".cluster")
+z <- as.data.frame(z)
+
+tooltips <- paste0("District: ", z$District.name, "<br />State: ", z$State.name, "<br />Cluster: ", z$Cluster_1_2, "<br />Dimension 1: ", round(z$Dim.1, 3), "<br />Dimension 2: ", round(z$Dim.2,3), "<br />Population: ", z$Population)
+
+scatterD3(data = z, x = Dim.1, y = Dim.2, tooltip_text = tooltips, col_var = Cluster_1_2, colors = c("#7fc97f","#beaed4","#fdc086"), ellipses = TRUE, size_var = Population, col_lab = "Cluster", point_opacity = 0.8,
+          hover_opacity = 1,xlab = "1st Dimension", ylab = "2nd Dimension")
+
+
+```
+
+## Cluster Interpretation
+
+```{r}
+library(tidyr)
+library(plotly)
+india_box <- select(z, c(2,3,8,13,22,27,23,30,34,41,67))
+india_box_long <- india_box %>% gather(c(3:9), key = Variable, value = Percentage)
+## Recoding india_box_long$Variable
+india_box_long$Variable <- recode(india_box_long$Variable,
+               "Literacy_Rate" = "Literacy Rate",
+               "Working_percent" = "Working",
+               "Non_Agriculture_Cultivation_percent" = "Non Agriculture Jobs",
+               "Hindu_percent" = "Hindu",
+               "Houses_Electric_Lighting_percent" = "Housesolds with Electricity",
+               "Urban_households_percent" = "Urban Households",
+                "Christian_percent" = "Christian",
+               "Household_all_facilities_percent" = "Households with all facilities")
+
+plot_ly(india_box_long, x = ~Variable, y = ~Percentage, color = ~Cluster_1_2, type = "box", colors = c("#fdc086","#beaed4","#7fc97f")) %>%
+  layout(boxmode = "group")
+```
+
+
+## Geography of Clusters
+```{r}
+nc <- sf::st_read("Shape Files/2001_Dist.shp", quiet = TRUE)
+nc <- rename(nc, "State.name" = "ST_NM", "District.name" = "DISTRICT")
+data <- merge(nc, z, by = c("State.name", "District.name"))
+
+
+plot_ly(data, color = ~Cluster_1_2 ,alpha = 1, split = ~District.name,
+        showlegend = FALSE, text = ~paste("District: ", `District.name`, "<br>State: ", `State.name`,"<br>Cluster: ", `Cluster_1_2`,"<br>Dimension 1: ", `Dim.1`, "<br>Dimension 2: ", `Dim.2`), hoverinfo = "text", stroke = I("black"), span = I(0.5), hoveron = "fill", colors = c("#fdc086","#beaed4","#7fc97f"))
+
+```
+
+
+## District Factor Map Dimension 3 & 4
+
+```{r}
+
+tooltips <- paste0("District: ", z$District.name, "<br />State: ", z$State.name, "<br />Dimension 3: ", round(z$Dim.3, 3), "<br />Dimension 4: ", round(z$Dim.4,3), "<br />Population: ", z$Population)
+
+scatterD3(data = z, x = Dim.3, Dim.4, tooltip_text = tooltips, col_var = Cluster_3_4, ellipses = TRUE, size_var = Population, col_lab = "Cluster", point_opacity = 0.5,
+          hover_opacity = 1,xlab = "1st Dimension", ylab = "2nd Dimension")
+```
+
+## Variable Factor Map Dimension 3 & 4
+
+```{r}
+tooltips <- paste0("Variable: ", cc2$Variable, "<br />Dimension 3: ", round(cc2$Dim.3, 3), "<br />Dimension 4: ", round(cc2$Dim.4,3), "<br />Type: ", cc2$Type)
+
+scatterD3(data = cc2, x = Dim.3, y = Dim.4, tooltip_text = tooltips, col_lab = "Type of Variable", col_var = Type, unit_circle = TRUE, 
+          type_var = c(rep("arrow", 57)), lab = Variable, labels_size = 7)
+```
