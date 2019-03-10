@@ -12,11 +12,11 @@
     
     
     <item>
-      <title>Example Visulisations</title>
-      <link>/example-visulisations/</link>
+      <title>Example Visualisations</title>
+      <link>/example-visualisations/</link>
       <pubDate>Fri, 30 Dec 2016 21:49:57 -0700</pubDate>
       
-      <guid>/example-visulisations/</guid>
+      <guid>/example-visualisations/</guid>
       <description>Here are some examples of the visualisations I made -
  China - Male vs Female Population - A visualisation in R using the highcharter library to visualise the the growth of male and female population in China overtime. (Press play button at the bottom). Data Source - IHME Global Burden of Disease Population Estimates
  India - Domestic Violence Quiz - A visualisation to understand the physical abuse against women in India.</description>
